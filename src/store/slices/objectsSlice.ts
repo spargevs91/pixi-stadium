@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type {GeneratedObject} from '../../utils/generateObjects'; // Используем существующий тип
+import type {IGeneratedObject} from '../../utils/generateObjects'; // Используем существующий тип
 // Используем существующий тип
 import type { PIXI } from 'pixi.js';
 
@@ -10,7 +10,7 @@ type PixiRect = {
 };
 
 interface ObjectsState {
-    objects: GeneratedObject[];
+    objects: IGeneratedObject[];
     selectedRect: PixiRect | null;
 }
 
@@ -23,7 +23,7 @@ const objectsSlice = createSlice({
     name: 'objects',
     initialState,
     reducers: {
-        setObjects: (state, action: PayloadAction<GeneratedObject[]>) => {
+        setObjects: (state, action: PayloadAction<IGeneratedObject[]>) => {
             state.objects = action.payload;
         },
         setSelectedRect: (state, action: PayloadAction<PixiRect | null>) => {

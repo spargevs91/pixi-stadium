@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Определение типов
 export type Status = 'st1' | 'st2' | 'st3' | 'st4' | 'st5';
 
-export interface GeneratedObject {
+export interface IGeneratedObject {
     guid: string;
     name: string;
     status: Status;

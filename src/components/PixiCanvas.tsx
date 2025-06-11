@@ -2,8 +2,8 @@ import {useEffect, useRef, useState} from 'react';
 import * as PIXI from 'pixi.js';
 import {Viewport} from 'pixi-viewport';
 import {useSelector, useDispatch} from 'react-redux';
-import type {RootState} from '../store/store';
-import type {GeneratedObject} from '../utils/generateObjects';
+import type {IRootState} from '../store/store';
+import type {IGeneratedObject} from '../utils/generateObjects';
 import {setObjectChildes, setSelectedObject} from '../store/slices/objectChildesSlice';
 import {generateObjectChildes} from '../utils/generateObjectChildes';
 
@@ -11,8 +11,8 @@ const PixiCanvas = () => {
     const canvasRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application | null>(null);
     const viewportRef = useRef<Viewport | null>(null);
-    const objects = useSelector((state: RootState) => state.objects.objects);
-    const {objectChildes, selectedObject} = useSelector((state: RootState) => state.objectChildes);
+    const objects = useSelector((state: IRootState) => state.objects.objects);
+    const {objectChildes, selectedObject} = useSelector((state: IRootState) => state.objectChildes);
     const lastClickTime = useRef<number>(0);
     const lastClickedRect = useRef<PIXI.Graphics | null>(null);
     const DOUBLE_CLICK_THRESHOLD = 300;
@@ -130,7 +130,7 @@ const PixiCanvas = () => {
                 let lastHoveredRectPos: { x: number; y: number } | null = null;
                 let isHoveringRect = false;
 
-                const placeObjectsInSpiral = (filteredObjects: GeneratedObject[]) => {
+                const placeObjectsInSpiral = (filteredObjects: IGeneratedObject[]) => {
                     viewport.removeChildren();
                     rectangles.length = 0;
 
@@ -168,6 +168,7 @@ const PixiCanvas = () => {
                             rect.x = posX;
                             rect.y = posY;
                             rect.alpha = selectedStatuses.has(obj?.status) ? 1 : 0.29;
+                            rect.name = filteredObjects[i].status;
 
                             rect.interactive = true;
                             rect.buttonMode = true;
@@ -463,16 +464,26 @@ const PixiCanvas = () => {
     }, [objects, selectedObject]);
 
     useEffect(() => {
+        console.log(viewportRef.current?.children)
 
-        console.log("1111111111111111111111111111111111", canvasRef, appRef)
-        appRef.current?.stage?.children[0]?.children.forEach((cd) => {
-            cd.localAlpha = 1;
-            cd.groupAlpha = 1;
-        })
+        if (isFilterActive) {
+            viewportRef.current?.children?.forEach((cd) => {
+                if (selectedStatuses.has(cd?.name)) cd.groupAlpha = 1
+                else cd.on('pointerover', () => {
+                    cd.groupAlpha = 0.29
+                })
+            })
 
-        appRef.current?.start()
+            viewportRef.current?._onUpdate()
+        } else {
+            viewportRef.current?.children?.forEach((cd) => {
+                // cd.localAlpha = 1
+                cd.groupAlpha = 0.29
+            });
+            viewportRef.current?._onUpdate()
+        }
 
-    }, [canvasRef, appRef, selectedStatuses])
+    }, [viewportRef, selectedStatuses, isFilterActive])
 
     const uniqueStatuses = [...new Set(objects.map((obj) => obj.status))];
 
