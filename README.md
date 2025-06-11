@@ -1,54 +1,101 @@
-# React + TypeScript + Vite
+**Шаги для добавления Module Federation**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+-   **Установка необходимых зависимостей**
 
-Currently, two official plugins are available:
+    -   Убедитесь, что у вас установлен Node.js версии 18+ или 20+
+        > (рекомендуется проверить совместимость в документации Vite).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+    -   Установите плагин Module Federation как зависимость разработки:
 
-## Expanding the ESLint configuration
+    -   bash
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+    -   npm install \--save-dev \@originjs/vite-plugin-federation
+
+    -   Или, если вы предпочитаете более новую версию:
+
+    -   bash
+
+    -   npm install \--save-dev \@module-federation/vite
+
+    -   Убедитесь, что у вас установлены зависимости React 18:
+
+    -   bash
+
+    -   npm install react react-dom
+
+-   **Обновление конфигурации Vite (**vite.config.js**)**
+
+    -   Откройте или создайте файл vite.config.js в корне проекта.
+
+    -   Добавьте плагин federation и настройте его в зависимости от
+        > того, будет ли ваш проект выступать в роли **Host**
+        > (хост-приложения, которое загружает удалённые модули) или
+        > **Remote** (удалённого приложения, которое экспортирует
+        > модули).
+
+-   **Пример для Remote (удалённое приложение):**
+
+    -   Это приложение будет экспортировать компоненты для использования
+        > другими приложениями.
 
 ```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import federation from '@originjs/vite-plugin-federation';
+
+export default defineConfig({
+    plugins: [
+        react(),
+        federation({
+            name: 'remoteApp', // Уникальное имя вашего приложения
+            filename: 'remoteEntry.js', // Файл точки входа для удалённого модуля
+            exposes: {
+                './Button': './src/components/Button', // Путь к экспортируемому компоненту
+            },
+            shared: ['react', 'react-dom'], // Общие зависимости
+        }),
+    ],
+    build: {
+        target: 'esnext', // Поддержка top-level await
     },
-  },
-})
+    server: {
+        port: 5001, // Порт для разработки
+        headers: {
+            'Access-Control-Allow-Origin': '*', // Разрешить CORS для разработки
+        },
+    },
+});
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+**Пример для Host (хост-приложение):**
+Это приложение будет динамически загружать компоненты из удалённых приложений.
+
+- Это приложение будет динамически загружать компоненты из удалённых приложений.
 
 ```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import federation from '@originjs/vite-plugin-federation';
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+export default defineConfig({
+    plugins: [
+        react(),
+        federation({
+            name: 'hostApp', // Уникальное имя хоста
+            remotes: {
+                remoteApp: 'http://localhost:5001/assets/remoteEntry.js', // URL удалённого модуля
+            },
+            shared: ['react', 'react-dom'], // Общие зависимости
+        }),
+    ],
+    build: {
+        target: 'esnext', // Поддержка top-level await
+    },
+    server: {
+        port: 5000, // Порт для разработки
+        headers: {
+            'Access-Control-Allow-Origin': '*', // Разрешить CORS
+        },
+    },
+});
 ```
