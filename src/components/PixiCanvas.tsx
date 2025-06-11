@@ -461,29 +461,7 @@ const PixiCanvas = () => {
             }
             if (canvasRef.current) canvasRef.current.innerHTML = '';
         };
-    }, [objects, selectedObject]);
-
-    useEffect(() => {
-        console.log(viewportRef.current?.children)
-
-        if (isFilterActive) {
-            viewportRef.current?.children?.forEach((cd) => {
-                if (selectedStatuses.has(cd?.name)) cd.groupAlpha = 1
-                else cd.on('pointerover', () => {
-                    cd.groupAlpha = 0.29
-                })
-            })
-
-            viewportRef.current?._onUpdate()
-        } else {
-            viewportRef.current?.children?.forEach((cd) => {
-                // cd.localAlpha = 1
-                cd.groupAlpha = 0.29
-            });
-            viewportRef.current?._onUpdate()
-        }
-
-    }, [viewportRef, selectedStatuses, isFilterActive])
+    }, [objects, selectedObject, selectedStatuses]);
 
     const uniqueStatuses = [...new Set(objects.map((obj) => obj.status))];
 
